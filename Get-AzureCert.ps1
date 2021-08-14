@@ -15,7 +15,7 @@ The full domain of the Azure tenant.
 .EXAMPLE
 Get-AzureCert contoso.com
 Get-AzureCert contoso.onmicrosoft.com
-Get-AzureCert -domain contoso.com -folderpath 'c:\temp\cert\'
+Get-AzureCert -domain contoso.com -folderpath 'c:\temp\cert\'  (use the final \ after folder name)
 
 
 .NOTES
@@ -55,25 +55,37 @@ function Get-AzureCert{
         #personal notes //remove later// - this was from powershell repo with localsecretcertificate.ps1 on onedrive
         # Your tenant name (can something more descriptive as well)
 
-if (!($folderpath)) {[ValidateScript({Test-path $_ })]$folderpath = read-host "What folder location?"}
+if ($folderpath) {Write-Verbose "We already defined it"}
+else{
+
+    $SaveChooser = New-Object -TypeName System.Windows.Forms.SaveFileDialog
+    $SaveChooser.ShowDialog()
+    Get-iLPHighCPUProcess | Out-File $SaveChooser.Filename
+
+    <#
+#sourced from https://stackoverflow.com/questions/25690038/how-do-i-properly-use-the-folderbrowserdialog-in-powershell - thanks Ipse and Stib for your contributions! 👍
+Add-Type -AssemblyName System.Windows.Forms
+$browser = New-Object System.Windows.Forms.FolderBrowserDialog
+$null = $browser.ShowDialog()
+$folderpath = $browser.SelectedPath
+
+#>
+}
+
+Get-Date
+$date = (get-date -Format yyyyMMdd)
 
 
-
-FolderBrowserDialog diag = new FolderBrowserDialog();  
-if (diag.ShowDialog() == System.Windows.Forms.DialogResult.OK)  
-{  
-    string folder = diag.SelectedPath;  //selected folder path
-  
-}  
-
-$SaveChooser = New-Object -TypeName System.Windows.Forms.SaveFileDialog
-$SaveChooser.ShowDialog()
-Get-iLPHighCPUProcess | Out-File $SaveChooser.Filename
+$file = 'c:\folder\Prefix_$date.txt'
 
 
-
+$certpath = “$folderpath{\AzureCert.cer}”
+#$certpath = "$folderpath 'AzureCert' $date '.cer'"
 # Where to export the certificate without the private key
-$CerOutputPath     = "C:\Temp\AzureCert.cer"
+#$CerOutputPath     = "C:\Temp\AzureCert.cer"
+$CerOutputPath = $certpath
+
+
 
 # What cert store you want it to be in
 $StoreLocation     = "Cert:\CurrentUser\My"
@@ -85,7 +97,7 @@ $ExpirationDate    = (Get-Date).AddYears(2)
 # Splat for readability
 $CreateCertificateSplat = @{
     FriendlyName      = "AzureApp"
-    DnsName           = $TenantName
+    DnsName           = $domain
     CertStoreLocation = $StoreLocation
     NotAfter          = $ExpirationDate
     KeyExportPolicy   = "Exportable"
@@ -103,7 +115,7 @@ $CertificatePath = Join-Path -Path $StoreLocation -ChildPath $Certificate.Thumbp
 # Export certificate without private key
 Export-Certificate -Cert $CertificatePath -FilePath $CerOutputPath | Out-Null
 
-        return $tenantId
+        return $tenantId + "      " + $CerOutputPath
     }
 
 }
