@@ -136,9 +136,9 @@ $Certificate = New-SelfSignedCertificate @CreateCertificateSplat
 $CertificatePath = Join-Path -Path $StoreLocation -ChildPath $Certificate.Thumbprint
 
 # Export certificate without private key
-Export-Certificate -Cert $CertificatePath -FilePath $CerOutputPath | Out-Null
+Export-Certificate -Cert $CertificatePath -FilePath $CertPath | Out-Null
 
-        return write-host "Thumbprint of certificate - write this down for future steps" $Certificate.Thumbprint `n "File stored at location:" $CerOutputPath
+        return write-host "Thumbprint of certificate - write this down for future steps" $Certificate.Thumbprint `n "File stored at location:" $CertPath
 
     }
 
