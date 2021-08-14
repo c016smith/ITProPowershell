@@ -54,32 +54,36 @@ function Get-AzureCert{
 
         #personal notes //remove later// - this was from powershell repo with localsecretcertificate.ps1 on onedrive
         # Your tenant name (can something more descriptive as well)
-
-if ($folderpath) {Write-Verbose "We already defined it"}
+    if ($folderpath) {Write-Verbose "We defined folder it and assume AzureCert.cer as the filename"{
+    $filename = '\AzureCert'
+    $date = (get-date -Format yyyyMMdd)
+    $ext = '.cer'
+    $certpath = "$folderpath$filename"
+    $certpath = "$folderpath$filename$date$ext"
+    $certpath
+}
 else{
-    $folderpath = $browser.SelectedPath
+ <#   $folderpath = $browser.SelectedPath
     Write-host "When prompted, provide the folder location and filename (ending in .CER).   Press any key to continue..."
     $SaveChooser = New-Object -TypeName System.Windows.Forms.SaveFileDialog -ArgumentList
     $SaveChooser.ShowDialog()
-    
-
-
-    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") |
-    Out-Null
+   #> 
+    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") |  Out-Null
 
     $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
     $SaveFileDialog.CreatePrompt = true;
     $SaveFileDialog.OverwritePrompt = true;
     $SaveFileDialog.initialDirectory = $initialDirectory
-    $SaveFileDialog.FileName = "Name your certificate file and keep it secret and safe";
-        // DefaultExt is only used when "All files" is selected from 
-        // the filter box and no extension is specified by the user.
+    $SaveFileDialog.FileName = "Certificate name keep it safe";
+        #DefaultExt is only used when "All files" is selected from 
+        #the filter box and no extension is specified by the user.
     $SaveFileDialog.DefaultExt = "cer";
         $SaveFileDialog.filter = “All files (*.*)|*.*”
     #$SaveFileDialog.filter = “CER files (*.cer)”
     $SaveFileDialog.ShowDialog() | Out-Null
     $SaveFileDialog.filename
 
+    $certpath = $SaveFileDialog.FileName
 
 
 
@@ -99,30 +103,12 @@ $null = $browser.ShowDialog()
 [void][System.Console]::ReadKey($FALSE)
 
 #>
+
+
+
+
 }
 
-Get-Date
-$date = (get-date -Format yyyyMMdd)
-
-
-$file = 'c:\folder\Prefix_$date.txt'
-
-
-$certpath = “$folderpath{\AzureCert.cer}”
-#$certpath = "$folderpath 'AzureCert' $date '.cer'"
-# Where to export the certificate without the private key
-#$CerOutputPath     = "C:\Temp\AzureCert.cer"
-#$CerOutputPath = $certpath
-$CerOutputPath = $SaveChooser.FileName
-
-<#gci 
-  | ?{ !$_.PSIsContainer -and !$_.Name.EndsWith(".xyz") } 
-  | %{ ren -new ($_.Name + ".txt") }
-
-Get-ChildItem $CerOutputPath 
-
-Get-ChildItem -exclude "*.xyz" | WHere-Object{!$_.PsIsContainer} | Rename-Item -newname {$_.name + ".txt"}
-#>
 
 # What cert store you want it to be in
 $StoreLocation     = "Cert:\CurrentUser\My"
@@ -134,7 +120,7 @@ $ExpirationDate    = (Get-Date).AddYears(2)
 # Splat for readability
 $CreateCertificateSplat = @{
     FriendlyName      = "AzureApp"
-    DnsName           = $domain
+    DnsName           = $Domain
     CertStoreLocation = $StoreLocation
     NotAfter          = $ExpirationDate
     KeyExportPolicy   = "Exportable"
