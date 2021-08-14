@@ -57,17 +57,46 @@ function Get-AzureCert{
 
 if ($folderpath) {Write-Verbose "We already defined it"}
 else{
-
-    $SaveChooser = New-Object -TypeName System.Windows.Forms.SaveFileDialog
+    $folderpath = $browser.SelectedPath
+    Write-host "When prompted, provide the folder location and filename (ending in .CER).   Press any key to continue..."
+    $SaveChooser = New-Object -TypeName System.Windows.Forms.SaveFileDialog -ArgumentList
     $SaveChooser.ShowDialog()
-    Get-iLPHighCPUProcess | Out-File $SaveChooser.Filename
+    
+
+
+    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") |
+    Out-Null
+
+    $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+    $SaveFileDialog.CreatePrompt = true;
+    $SaveFileDialog.OverwritePrompt = true;
+    $SaveFileDialog.initialDirectory = $initialDirectory
+    $SaveFileDialog.FileName = "Name your certificate file and keep it secret and safe";
+        // DefaultExt is only used when "All files" is selected from 
+        // the filter box and no extension is specified by the user.
+    $SaveFileDialog.DefaultExt = "cer";
+        $SaveFileDialog.filter = “All files (*.*)|*.*”
+    #$SaveFileDialog.filter = “CER files (*.cer)”
+    $SaveFileDialog.ShowDialog() | Out-Null
+    $SaveFileDialog.filename
+
+
+
+
+
+
+
+
+
+
 
     <#
 #sourced from https://stackoverflow.com/questions/25690038/how-do-i-properly-use-the-folderbrowserdialog-in-powershell - thanks Ipse and Stib for your contributions! 👍
 Add-Type -AssemblyName System.Windows.Forms
 $browser = New-Object System.Windows.Forms.FolderBrowserDialog
 $null = $browser.ShowDialog()
-$folderpath = $browser.SelectedPath
+
+[void][System.Console]::ReadKey($FALSE)
 
 #>
 }
@@ -83,9 +112,17 @@ $certpath = “$folderpath{\AzureCert.cer}”
 #$certpath = "$folderpath 'AzureCert' $date '.cer'"
 # Where to export the certificate without the private key
 #$CerOutputPath     = "C:\Temp\AzureCert.cer"
-$CerOutputPath = $certpath
+#$CerOutputPath = $certpath
+$CerOutputPath = $SaveChooser.FileName
 
+<#gci 
+  | ?{ !$_.PSIsContainer -and !$_.Name.EndsWith(".xyz") } 
+  | %{ ren -new ($_.Name + ".txt") }
 
+Get-ChildItem $CerOutputPath 
+
+Get-ChildItem -exclude "*.xyz" | WHere-Object{!$_.PsIsContainer} | Rename-Item -newname {$_.name + ".txt"}
+#>
 
 # What cert store you want it to be in
 $StoreLocation     = "Cert:\CurrentUser\My"
@@ -115,7 +152,8 @@ $CertificatePath = Join-Path -Path $StoreLocation -ChildPath $Certificate.Thumbp
 # Export certificate without private key
 Export-Certificate -Cert $CertificatePath -FilePath $CerOutputPath | Out-Null
 
-        return $tenantId + "      " + $CerOutputPath
+        return write-host "Thumbprint of certificate - write this down for future steps" $Certificate.Thumbprint `n "File stored at location:" $CerOutputPath
+
     }
 
 }
